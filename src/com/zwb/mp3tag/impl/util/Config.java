@@ -1,4 +1,4 @@
-package com.zwb.mp3tag.impl;
+package com.zwb.mp3tag.impl.util;
 
 public class Config 
 {
