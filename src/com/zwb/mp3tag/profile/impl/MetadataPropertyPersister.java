@@ -87,7 +87,12 @@ public class MetadataPropertyPersister implements IMetadataPersister
 	
 	public String getValue(String key)
 	{
-		return this.props.getProperty(key);
+		String val = this.props.getProperty(key);
+		if(val==null)
+		{
+			return "";
+		}
+		return val.trim();
 	}
 	
 	public void setValue(String key, String value)

@@ -2,7 +2,6 @@ package com.zwb.mp3tag.profile.impl;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import com.zwb.lazyload.ILoader;
 import com.zwb.lazyload.LazyLoader;
@@ -18,21 +18,26 @@ import com.zwb.lazyload.Ptr;
 import com.zwb.mp3tag.exception.GkMp3TaggerRuntimeExceptionFileIO;
 import com.zwb.mp3tag.exception.GkMp3TaggerRuntimeExceptionIllegalInput;
 import com.zwb.mp3tag.profile.api.IMetadataPersister;
+import com.zwb.mp3tag.profile.api.ReleaseType;
 import com.zwb.tab.Tab;
 
 public class MetadataSimplePersister implements IMetadataPersister
 {
 	private static final int POS_SIG_NAME = 0;
-	private static final int POS_ARTIST_NAME = 1;
-	private static final int POS_RELEASE_NAME = 2;
-	private static final int POS_TRACKS_NAMES = 3;
+	private static final int POS_RELEASE_TYPE = 1;
+	private static final int POS_ARTIST_NAME = 2;
+	private static final int POS_RELEASE_NAME = 3;
+	private static final int POS_TRACKS = 4;
+	private static final String TRACK_SEPARATOR = "////";
 	
 	private static final String SIGNATURE = "# geekOlogy tagger profile (simple format); last accessed ";
 	
 	private File file;
 	private Ptr<String> artistName = new Ptr<>();
 	private Ptr<String> releaseName = new Ptr<>();
+	private Ptr<String> releaseType = new Ptr<>();
 	private Ptr<List<String>> trackNames = new Ptr<>();
+	private Ptr<List<String>> trackArtists = new Ptr<>();
 	private int trackTotal = 0;
 	
 	public static boolean isSimpleFormat(String folder, String filename)
@@ -94,6 +99,10 @@ public class MetadataSimplePersister implements IMetadataPersister
 		{
 			return LazyLoader.loadLazy(this.artistName, new ArtistNameLoader());
 		}
+		else if(key.equals(AttributeKeys.getKeyReleaseType()))
+		{
+			return LazyLoader.loadLazy(this.releaseType, new ReleaseTypeLoader());
+		}
 		else if (key.equals(AttributeKeys.getKeyReleaseName()))
 		{
 			return LazyLoader.loadLazy(this.releaseName, new ReleaseNameLoader());			
@@ -107,12 +116,26 @@ public class MetadataSimplePersister implements IMetadataPersister
 			}
 			return getTracks().get(i).toString();
 		}
+		else if(AttributeKeys.matchesKeyTrackArtist(key))
+		{
+			int i = AttributeKeys.extractTrackNo(key)-1;
+			if(getTrackArtists().size()<i+1)
+			{
+				return "";
+			}
+			return getTrackArtists().get(i).toString();
+		}
 		return null;
 	}
 
 	public List<String> getTracks()
 	{
 		return LazyLoader.loadLazy(this.trackNames, new TrackNamesLoader());
+	}
+	
+	public List<String> getTrackArtists()
+	{
+		return LazyLoader.loadLazy(this.trackArtists, new TrackArtistLoader());
 	}
 	
 	@Override
@@ -128,17 +151,62 @@ public class MetadataSimplePersister implements IMetadataPersister
 			this.writeNewLine(POS_RELEASE_NAME, value);
 			this.releaseName.setValue(null);
 		}
+		else if (key.equals(AttributeKeys.getKeyReleaseType()))
+		{
+			this.writeNewLine(POS_RELEASE_TYPE, value);
+			this.releaseType.setValue(null);
+		}
 		else if(AttributeKeys.matchesKeyTrackName(key))
 		{
 			int i = AttributeKeys.extractTrackNo(key);
-			this.writeNewLine(POS_TRACKS_NAMES+i-1, value);
-			this.trackNames.setValue(null);
+			if(isReleaseType(ReleaseType.ALBUM))
+			{
+				this.writeNewLine(POS_TRACKS+i-1, value);
+				this.trackNames.setValue(null);				
+			}
+			else if(isReleaseType(ReleaseType.SAMPLER))
+			{
+				String trackArtist = this.getValue(AttributeKeys.getKeyTrackArtist(i));
+				if(trackArtist==null)
+				{
+					trackArtist = "";
+				}
+				this.writeNewLine(POS_TRACKS+i-1, trackArtist+TRACK_SEPARATOR+value);
+				this.trackArtists.setValue(null);								
+			}
+		}
+		else if(AttributeKeys.matchesKeyTrackArtist(key))
+		{
+			int i = AttributeKeys.extractTrackNo(key);
+			if(isReleaseType(ReleaseType.ALBUM))
+			{
+				throw new GkMp3TaggerRuntimeExceptionIllegalInput("normal albums don't have different artists for tracks!");
+			}
+			else if(isReleaseType(ReleaseType.SAMPLER))
+			{
+				String trackName = this.getValue(AttributeKeys.getKeyTrackName(i));
+				if(trackName==null)
+				{
+					trackName = "";
+				}
+				this.writeNewLine(POS_TRACKS+i-1, value+TRACK_SEPARATOR+trackName);
+				this.trackArtists.setValue(null);				
+			}
 		}
 	}
 
+	private boolean isReleaseType(ReleaseType t)
+	{
+		return t.toString().equals(this.getValue(AttributeKeys.getKeyReleaseType()));
+	}
+	
 	@Override
 	public void setValues(Map<String, String> values) 
 	{
+		for(Entry<String, String> e: values.entrySet())
+		{
+			this.setValue(e.getKey(), e.getValue());
+		}
 	}
 
 	@Override
@@ -235,7 +303,7 @@ public class MetadataSimplePersister implements IMetadataPersister
 			try 
 			{
 				BufferedReader br = brFromLine(POS_ARTIST_NAME);
-				return br.readLine();
+				return br.readLine().trim();
 			} 
 			catch (IOException e) 
 			{
@@ -252,7 +320,24 @@ public class MetadataSimplePersister implements IMetadataPersister
 			try 
 			{
 				BufferedReader br = brFromLine(POS_RELEASE_NAME);
-				return br.readLine();
+				return br.readLine().trim();
+			} 
+			catch (IOException e) 
+			{
+				throw new GkMp3TaggerRuntimeExceptionFileIO("error writing/reading file <"+MetadataSimplePersister.this.file.getAbsolutePath()+">", e);
+			}
+		}		
+	}
+	
+	class ReleaseTypeLoader implements ILoader<String>
+	{
+		@Override
+		public String load()
+		{
+			try 
+			{
+				BufferedReader br = brFromLine(POS_RELEASE_TYPE);
+				return br.readLine().trim();
 			} 
 			catch (IOException e) 
 			{
@@ -269,11 +354,11 @@ public class MetadataSimplePersister implements IMetadataPersister
 			try 
 			{
 				List<String> l = new ArrayList<>();
-				BufferedReader br = brFromLine(POS_TRACKS_NAMES);
+				BufferedReader br = brFromLine(POS_TRACKS);
 				String line;
 				while((line = br.readLine()) != null)
 				{
-					l.add(line);
+					l.add(MetadataSimplePersister.this.extractTrack(line.trim()));
 				}
 				MetadataSimplePersister.this.trackTotal = l.size();
 				return l;
@@ -285,6 +370,62 @@ public class MetadataSimplePersister implements IMetadataPersister
 		}
 	}
 
+	class TrackArtistLoader implements ILoader
+	{
+		@Override
+		public List<String> load()
+		{
+			try 
+			{
+				List<String> l = new ArrayList<>();
+				BufferedReader br = brFromLine(POS_TRACKS);
+				String line;
+				while((line = br.readLine()) != null)
+				{
+					l.add(MetadataSimplePersister.this.extractArtist(line.trim()));
+				}
+				MetadataSimplePersister.this.trackTotal = l.size();
+				return l;
+			} 
+			catch (IOException e) 
+			{
+				throw new GkMp3TaggerRuntimeExceptionFileIO("error writing/reading file <"+MetadataSimplePersister.this.file.getAbsolutePath()+">", e);
+			}
+		}
+	}
+
+	private String extractTrack(String line)
+	{
+		if(isReleaseType(ReleaseType.ALBUM))
+		{
+			return line;
+		}
+		else if(isReleaseType(ReleaseType.SAMPLER))
+		{
+			return line.split(TRACK_SEPARATOR)[1];
+		}
+		else
+		{
+			return null;
+		}
+	}
+	
+	private String extractArtist(String line)
+	{
+		if(isReleaseType(ReleaseType.ALBUM))
+		{
+			return this.getValue(AttributeKeys.getKeyArtistName());
+		}
+		if(isReleaseType(ReleaseType.SAMPLER))
+		{
+			return line.split(TRACK_SEPARATOR)[0];
+		}
+		else
+		{
+			return null;
+		}
+	}
+	
 	@Override
 	public void clear() 
 	{
@@ -294,6 +435,7 @@ public class MetadataSimplePersister implements IMetadataPersister
 			init();
 			this.artistName.setValue(null);
 			this.releaseName.setValue(null);
+			this.releaseType.setValue(null);
 			this.trackNames.setValue(null);
 		}
 		catch (IOException e) 

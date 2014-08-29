@@ -5,10 +5,17 @@ public class AttributeKeys
 	private static final String ARTIST_NAME = "release.artist";
 	private static final String RELEASE_NAME = "release.name";
 	private static final String TRACK_NAME_PREFIX = "track.#.name";
+	private static final String TRACK_ARTIST_PREFIX = "track.#.artist";
+	private static final String TYPE = "release.type";
 	
 	public static String getKeyArtistName()
 	{
 		return ARTIST_NAME;
+	}
+	
+	public static String getKeyReleaseType()
+	{
+		return TYPE;
 	}
 	
 	public static String getKeyReleaseName()
@@ -43,4 +50,27 @@ public class AttributeKeys
 		boolean match = key.matches(regex);
 		return match;
 	}
+	
+	public static String getKeyTrackArtist(int trackNo)
+	{
+		String key = new String(TRACK_ARTIST_PREFIX);
+		if(trackNo<10)
+		{
+			key = key.replaceAll("#", "0"+Integer.toString(trackNo));			
+		}
+		else
+		{
+			key = key.replaceAll("#", Integer.toString(trackNo));			
+		}
+		return key;
+	}
+	
+	public static boolean matchesKeyTrackArtist(String key)
+	{
+		String regex = new String(TRACK_ARTIST_PREFIX);
+		regex = regex.replaceAll("#", "[0-9][0-9]{0,1}");
+		boolean match = key.matches(regex);
+		return match;
+	}
+
 }

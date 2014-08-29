@@ -1,4 +1,4 @@
-package com.zwb.mp3tag.tagger.impl;
+package com.zwb.mp3tag.profile.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,6 +7,8 @@ import java.util.List;
 import com.zwb.mp3tag.profile.api.GkTaggingProfileWriter;
 import com.zwb.mp3tag.profile.api.ITaggingProfileAlbum;
 import com.zwb.mp3tag.profile.api.ITaggingTrackInfo;
+import com.zwb.mp3tag.profile.api.ReleaseType;
+import com.zwb.mp3tag.tagger.impl.TaggingTrackInfo;
 import com.zwb.tab.Tab;
 
 public class TaggingProfileAlbum implements ITaggingProfileAlbum
@@ -60,6 +62,12 @@ public class TaggingProfileAlbum implements ITaggingProfileAlbum
 		Collections.sort(tracks);
 		tracks.forEach((ITaggingTrackInfo t) -> (tab.addRow(Integer.toString(t.getTrackNo()), t.getArtistName(), t.getReleaseName(), t.getTrackName())));
 		return tab.printFormatted();
+	}
+
+	@Override
+	public ReleaseType getReleaseType() 
+	{
+		return ReleaseType.ALBUM;
 	}
 
 }

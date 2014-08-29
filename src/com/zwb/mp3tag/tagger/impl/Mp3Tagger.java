@@ -21,6 +21,7 @@ import com.zwb.mp3tag.exception.GkMp3TaggerExceptionTagger;
 import com.zwb.mp3tag.exception.GkMp3TaggerRuntimeExceptionIllegalInput;
 import com.zwb.mp3tag.exception.GkMp3TaggerRuntimeExceptionNotReadable;
 import com.zwb.mp3tag.exception.GkMp3TaggerRuntimeExceptionNotWritable;
+import com.zwb.mp3tag.profile.api.ITaggingProfile;
 import com.zwb.mp3tag.profile.api.ITaggingProfileAlbum;
 import com.zwb.mp3tag.tagger.api.IMp3Tagger;
 import com.zwb.mp3tag.util.MyLogger;
@@ -32,7 +33,7 @@ public class Mp3Tagger implements IMp3Tagger
 	private MyLogger log = new MyLogger(this.getClass());
 	
 	@Override
-	public void tag(String path, ITaggingProfileAlbum profile) throws GkMp3TaggerExceptionTagger 
+	public void tag(String path, ITaggingProfile profile) throws GkMp3TaggerExceptionTagger 
 	{
 		this.folder = new File(path);
 		List<File> filesToTag = this.checkFolder(folder, profile);
@@ -46,16 +47,12 @@ public class Mp3Tagger implements IMp3Tagger
 		}
 		
 		log.debug("FILES TO TAG:\n"+tab.printFormatted());
-		log.debug("TAGING PROFILE:\n"+profile.printFormatted());
+		log.debug("TAGGING PROFILE:\n"+profile.printFormatted());
 		
-		if(filesToTag.size()!=profile.getTrackInfos().size())
-		{
-			throw new GkMp3TaggerRuntimeExceptionIllegalInput("files count in folder <"+path+"> doens't match profile trakc count: <"+filesToTag.size()+">!=<"+profile.getTrackInfos().size()+">");
-		}
-		tagFile(filesToTag, profile);
+		tagFiles(filesToTag, profile);
 	}
 	
-	private void tagFile(List<File> files, ITaggingProfileAlbum profile) throws GkMp3TaggerExceptionTagger
+	private void tagFiles(List<File> files, ITaggingProfile profile) throws GkMp3TaggerExceptionTagger
 	{
 		log.debug("beginning with tagging of files: "+files);
 		int total = files.size();
@@ -93,7 +90,7 @@ public class Mp3Tagger implements IMp3Tagger
 		}
 	}
 	
-	private List<File> checkFolder(File folder, ITaggingProfileAlbum profile) throws GkMp3TaggerRuntimeExceptionIllegalInput
+	private List<File> checkFolder(File folder, ITaggingProfile profile) throws GkMp3TaggerRuntimeExceptionIllegalInput
 	{
 		if(profile==null)
 		{
