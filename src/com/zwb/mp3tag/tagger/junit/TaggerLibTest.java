@@ -1,4 +1,4 @@
-package com.zwb.mp3tag.junit;
+package com.zwb.mp3tag.tagger.junit;
 
 import java.io.File;
 import java.io.IOException;

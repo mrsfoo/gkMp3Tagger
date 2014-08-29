@@ -1,11 +1,13 @@
-package com.zwb.mp3tag.impl;
+package com.zwb.mp3tag.tagger.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import com.zwb.mp3tag.api.ITaggingProfileAlbum;
-import com.zwb.mp3tag.api.ITaggingTrackInfo;
+import com.zwb.mp3tag.profile.api.GkTaggingProfileWriter;
+import com.zwb.mp3tag.profile.api.ITaggingProfileAlbum;
+import com.zwb.mp3tag.profile.api.ITaggingTrackInfo;
+import com.zwb.tab.Tab;
 
 public class TaggingProfileAlbum implements ITaggingProfileAlbum
 {
@@ -44,9 +46,20 @@ public class TaggingProfileAlbum implements ITaggingProfileAlbum
 	}
 
 	@Override
-	public void persist(String path)
+	public void persist(String path, boolean simpleFormat)
 	{
-		// TODO Auto-generated method stub
+		GkTaggingProfileWriter.write(this, path, simpleFormat);
+	}
+
+	@Override
+	public String printFormatted() 
+	{
+		Tab tab = new Tab("tagging profile", "track no", "artist name", "release name", "track name");
+		tab.setTableComment("artist name   : "+getArtistName()+"\nrelease name  : "+getReleaseName());
+		List<ITaggingTrackInfo> tracks = this.getTrackInfos();
+		Collections.sort(tracks);
+		tracks.forEach((ITaggingTrackInfo t) -> (tab.addRow(Integer.toString(t.getTrackNo()), t.getArtistName(), t.getReleaseName(), t.getTrackName())));
+		return tab.printFormatted();
 	}
 
 }

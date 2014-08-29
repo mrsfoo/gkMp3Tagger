@@ -1,6 +1,6 @@
-package com.zwb.mp3tag.impl;
+package com.zwb.mp3tag.tagger.impl;
 
-import com.zwb.mp3tag.api.ITaggingTrackInfo;
+import com.zwb.mp3tag.profile.api.ITaggingTrackInfo;
 
 public class TaggingTrackInfo implements ITaggingTrackInfo, Comparable<ITaggingTrackInfo>
 {
@@ -45,7 +45,7 @@ public class TaggingTrackInfo implements ITaggingTrackInfo, Comparable<ITaggingT
 	@Override
 	public int compareTo(ITaggingTrackInfo o) 
 	{
-		return o.getTrackNo()-this.getTrackNo();
+		return this.getTrackNo()-o.getTrackNo();
 	}
 
 }

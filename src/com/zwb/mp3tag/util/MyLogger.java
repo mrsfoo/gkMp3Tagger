@@ -1,4 +1,4 @@
-package com.zwb.mp3tag.impl.util;
+package com.zwb.mp3tag.util;
 
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.Logger;

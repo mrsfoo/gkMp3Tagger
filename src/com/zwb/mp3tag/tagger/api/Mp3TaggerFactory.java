@@ -1,7 +1,8 @@
-package com.zwb.mp3tag.api;
+package com.zwb.mp3tag.tagger.api;
 
-import com.zwb.mp3tag.impl.Mp3Tagger;
-import com.zwb.mp3tag.impl.TaggingProfileAlbum;
+import com.zwb.mp3tag.profile.api.ITaggingProfileAlbum;
+import com.zwb.mp3tag.tagger.impl.Mp3Tagger;
+import com.zwb.mp3tag.tagger.impl.TaggingProfileAlbum;
 
 public class Mp3TaggerFactory 
 {

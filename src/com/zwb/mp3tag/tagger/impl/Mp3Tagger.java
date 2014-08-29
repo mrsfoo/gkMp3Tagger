@@ -1,4 +1,4 @@
-package com.zwb.mp3tag.impl;
+package com.zwb.mp3tag.tagger.impl;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,13 +17,14 @@ import org.jaudiotagger.tag.FieldKey;
 import org.jaudiotagger.tag.Tag;
 import org.jaudiotagger.tag.TagException;
 
-import com.zwb.mp3tag.api.IMp3Tagger;
-import com.zwb.mp3tag.api.ITaggingProfileAlbum;
 import com.zwb.mp3tag.exception.GkMp3TaggerExceptionTagger;
-import com.zwb.mp3tag.exception.GkMp3TaggerExceptionNotReadable;
-import com.zwb.mp3tag.exception.GkMp3TaggerExceptionNotWritable;
-import com.zwb.mp3tag.exception.GkMp3TaggerExceptionIllegalInput;
-import com.zwb.mp3tag.impl.util.MyLogger;
+import com.zwb.mp3tag.exception.GkMp3TaggerRuntimeExceptionIllegalInput;
+import com.zwb.mp3tag.exception.GkMp3TaggerRuntimeExceptionNotReadable;
+import com.zwb.mp3tag.exception.GkMp3TaggerRuntimeExceptionNotWritable;
+import com.zwb.mp3tag.profile.api.ITaggingProfileAlbum;
+import com.zwb.mp3tag.tagger.api.IMp3Tagger;
+import com.zwb.mp3tag.util.MyLogger;
+import com.zwb.tab.Tab;
 
 public class Mp3Tagger implements IMp3Tagger
 {
@@ -31,27 +32,37 @@ public class Mp3Tagger implements IMp3Tagger
 	private MyLogger log = new MyLogger(this.getClass());
 	
 	@Override
-	public void tag(String path, ITaggingProfileAlbum profile) throws GkMp3TaggerExceptionIllegalInput 
+	public void tag(String path, ITaggingProfileAlbum profile) throws GkMp3TaggerExceptionTagger 
 	{
 		this.folder = new File(path);
 		List<File> filesToTag = this.checkFolder(folder, profile);
-		log.debug("-----------------------------------------------------------");
-		log.debug("FILES TO TAG: "+filesToTag);
-		log.debug("-----------------------------------------------------------");
-		log.debug("#: ["+filesToTag.size()+"]");
+		Tab tab = new Tab("files to tag", "#" , "filename");
+		tab.setTableComment("files to tag in folder <"+folder+"> (count=<"+filesToTag.size()+">)");
+		int i = 1;
 		for(File f: filesToTag)
 		{
-			log.debug("* <"+f.getName()+">");
+			tab.addRow(Integer.toString(i), f.getName());
+			i++;
 		}
-		log.debug("-----------------------------------------------------------");
+		
+		log.debug("FILES TO TAG:\n"+tab.printFormatted());
+		log.debug("TAGING PROFILE:\n"+profile.printFormatted());
+		
+		if(filesToTag.size()!=profile.getTrackInfos().size())
+		{
+			throw new GkMp3TaggerRuntimeExceptionIllegalInput("files count in folder <"+path+"> doens't match profile trakc count: <"+filesToTag.size()+">!=<"+profile.getTrackInfos().size()+">");
+		}
+		tagFile(filesToTag, profile);
 	}
 	
-	private void tagFile(List<File> files, ITaggingProfileAlbum profile) throws GkMp3TaggerExceptionNotWritable, GkMp3TaggerExceptionNotReadable, GkMp3TaggerExceptionIllegalInput, GkMp3TaggerExceptionTagger
+	private void tagFile(List<File> files, ITaggingProfileAlbum profile) throws GkMp3TaggerExceptionTagger
 	{
+		log.debug("beginning with tagging of files: "+files);
 		int total = files.size();
 		for(int i=0; i<total; i++)
 		{
 			File file = files.get(i);
+			log.debug("now tagging file: "+file.getAbsolutePath());
 			try 
 			{
 				AudioFile mp3 = AudioFileIO.read(file);
@@ -65,15 +76,15 @@ public class Mp3Tagger implements IMp3Tagger
 			} 
 			catch (CannotReadException e) 
 			{
-				throw new GkMp3TaggerExceptionNotReadable("file <"+file.getName()+"> not readable!", e);
+				throw new GkMp3TaggerRuntimeExceptionNotReadable("file <"+file.getName()+"> not readable!", e);
 			} 
 			catch (IOException e) 
 			{
-				throw new GkMp3TaggerExceptionIllegalInput("general IO exception in file <"+file.getName()+">!", e);
+				throw new GkMp3TaggerRuntimeExceptionIllegalInput("general IO exception in file <"+file.getName()+">!", e);
 			} 
 			catch (ReadOnlyFileException | CannotWriteException e) 
 			{
-				throw new GkMp3TaggerExceptionNotWritable("file <"+file.getName()+"> not writable!", e);
+				throw new GkMp3TaggerRuntimeExceptionNotWritable("file <"+file.getName()+"> not writable!", e);
 			} 
 			catch (InvalidAudioFrameException | TagException e) 
 			{
@@ -82,28 +93,28 @@ public class Mp3Tagger implements IMp3Tagger
 		}
 	}
 	
-	private List<File> checkFolder(File folder, ITaggingProfileAlbum profile) throws GkMp3TaggerExceptionIllegalInput
+	private List<File> checkFolder(File folder, ITaggingProfileAlbum profile) throws GkMp3TaggerRuntimeExceptionIllegalInput
 	{
 		if(profile==null)
 		{
-			throw new GkMp3TaggerExceptionIllegalInput("the passed tagging profile is NULL!");
+			throw new GkMp3TaggerRuntimeExceptionIllegalInput("the passed tagging profile is NULL!");
 		}
 		if(folder==null)
 		{
-			throw new GkMp3TaggerExceptionIllegalInput("the folder <"+folder+"> is NULL!");
+			throw new GkMp3TaggerRuntimeExceptionIllegalInput("the folder <"+folder+"> is NULL!");
 		}
 		if(!folder.exists())
 		{
-			throw new GkMp3TaggerExceptionIllegalInput("the folder <"+folder+"> doesn't exist!");
+			throw new GkMp3TaggerRuntimeExceptionIllegalInput("the folder <"+folder+"> doesn't exist!");
 		}
 		if(!folder.isDirectory())
 		{
-			throw new GkMp3TaggerExceptionIllegalInput("the folder <"+folder+"> is not a folder!");
+			throw new GkMp3TaggerRuntimeExceptionIllegalInput("the folder <"+folder+"> is not a folder!");
 		}
 		List<File> content = getMp3Files(folder);
 		if(content.size()!=profile.getTrackInfos().size())
 		{
-			throw new GkMp3TaggerExceptionIllegalInput("the folder <"+folder+"> doesn't contain the correct number of mp3 files!");
+			throw new GkMp3TaggerRuntimeExceptionIllegalInput("the folder <"+folder+"> doesn't contain the correct number of mp3 files!");
 		}
 		return content;
 	}

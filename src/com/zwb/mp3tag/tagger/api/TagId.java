@@ -1,4 +1,4 @@
-package com.zwb.mp3tag.api;
+package com.zwb.mp3tag.tagger.api;
 
 public enum TagId 
 {
