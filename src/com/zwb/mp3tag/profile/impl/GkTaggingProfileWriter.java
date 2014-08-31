@@ -1,13 +1,21 @@
-package com.zwb.mp3tag.profile.api;
+package com.zwb.mp3tag.profile.impl;
 
 import java.util.List;
 
+import com.zwb.mp3tag.profile.api.IGkTaggingProfileWriter;
+import com.zwb.mp3tag.profile.api.IMetadataProvider;
+import com.zwb.mp3tag.profile.api.ITaggingProfile;
+import com.zwb.mp3tag.profile.api.ITaggingProfileAlbum;
+import com.zwb.mp3tag.profile.api.ITaggingProfileSampler;
+import com.zwb.mp3tag.profile.api.ITaggingTrackInfo;
+import com.zwb.mp3tag.profile.api.MetadataProviderFactory;
+import com.zwb.mp3tag.profile.api.ReleaseType;
 import com.zwb.mp3tag.util.Config;
 
 
-public class GkTaggingProfileWriter
+public class GkTaggingProfileWriter implements IGkTaggingProfileWriter
 {
-	public static void write(ITaggingProfile profile, String path, boolean simpleFormat) 
+	public void write(ITaggingProfile profile, String path, boolean simpleFormat) 
 	{
 		IMetadataProvider prov = MetadataProviderFactory.createMetadataProvider(path, Config.METADATA_FILENAME, simpleFormat);
 		prov.clear();

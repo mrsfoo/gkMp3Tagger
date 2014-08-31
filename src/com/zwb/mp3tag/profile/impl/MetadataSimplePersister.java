@@ -2,9 +2,11 @@ package com.zwb.mp3tag.profile.impl;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -54,8 +56,7 @@ public class MetadataSimplePersister implements IMetadataPersister
 	{
 		try
 		{
-			FileReader fr = new FileReader(f);
-			BufferedReader br = new BufferedReader(fr);
+			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f), "UTF8"));
 			String firstLine = br.readLine();
 			br.close();
 			return firstLine.startsWith(SIGNATURE);
@@ -237,8 +238,7 @@ public class MetadataSimplePersister implements IMetadataPersister
 	{
 		try 
 		{
-			FileReader a = new FileReader(this.file);
-	        BufferedReader br = new BufferedReader(a);
+			BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(this.file), "UTF8"));
 	        for(int i=0; i<line; i++)
 	        {
 	        	br.readLine();
