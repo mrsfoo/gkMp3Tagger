@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import com.zwb.mp3tag.profile.api.GkTaggingProfileReaderWriterFactory;
 import com.zwb.mp3tag.profile.api.ITaggingProfileAlbum;
 import com.zwb.mp3tag.profile.api.ITaggingTrackInfo;
 import com.zwb.mp3tag.profile.api.ReleaseType;
@@ -49,7 +50,7 @@ public class TaggingProfileAlbum implements ITaggingProfileAlbum
 	@Override
 	public void persist(String path, boolean simpleFormat)
 	{
-		new GkTaggingProfileWriter().write(this, path, simpleFormat);
+		GkTaggingProfileReaderWriterFactory.createWriter().write(this, path, simpleFormat);
 	}
 
 	@Override
