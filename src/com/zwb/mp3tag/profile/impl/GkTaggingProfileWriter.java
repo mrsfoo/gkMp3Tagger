@@ -20,8 +20,8 @@ public class GkTaggingProfileWriter implements IGkTaggingProfileWriter
 	prov.clear();
 	prov.setReleaseName(profile.getReleaseName());
 	List<ITaggingTrackInfo> tracks = profile.getTrackInfos();
-	tracks.forEach((ITaggingTrackInfo t) -> (prov.setTrackName(t.getTrackNo(), t.getTrackName())));
 	prov.setReleaseType(profile.getReleaseType());
+	tracks.forEach((ITaggingTrackInfo t) -> (prov.setTrackName(t.getTrackNo(), t.getTrackName())));
 	
 	if (profile.getReleaseType().equals(ReleaseType.ALBUM))
 	{
